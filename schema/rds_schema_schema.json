@@ -1,0 +1,81 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	//"id": "",
+	"title": "Plan Mover Schema",
+	"definitions": {
+		"tablename": {
+			"type": "string",
+			"minLength": 2,
+			"maxLength": 25
+		},
+		"columnname": {
+			"type": "string",
+			"minLength": 2,
+			"maxLength": 25
+		}
+	},
+	"type": "array",
+	"minItems": 1,
+	"items": {
+		"title": "table",
+		"type": "object",
+		"properties": {
+			"name": {
+				"$ref" : "#/definitions/tablename"
+			},
+			"columns": {
+				"description": "the columns in the table",
+				"type": "array",
+				"minItems": 1,
+				"items": {
+					"oneOf": [
+						{
+							"title": "non foreign-key column",
+							"type": "object",
+							"properties": {
+								"name": {
+									"$ref": "#/definitions/columnname"
+								},
+								"datatype": {
+									"description": "the type of postgres datatype this is",
+									"type": "string"
+								},
+								"notes": { "type": "string" }
+							},
+							"required": ["name", "datatype"],
+							"additionalProperties": false
+						},
+						{
+							"title": "foreign-key column",
+							"type": "object",
+							"properties": {
+								"name": {
+									"$ref": "#/definitions/columnname"
+								},
+								"foreigntablename": {
+									"$ref" : "#/definitions/tablename"
+								},
+								"notes": { "type": "string" }
+							},
+							"required": ["name", "foreigntablename"],
+							"additionalProperties": false
+						}
+					]
+				}
+			},
+			"uniquenessconstraints": {
+				"type": "array",
+				"minItems": 1,
+				"items": {
+					"title": "uniqueness constraint",
+					"description": "this is just a way of identifying that a tuple of columns needs to be unique in the table",
+					"type": "array",
+					"minItems": 1,
+					"items": { "$ref": "#/definitions/columnname" }
+				}
+			}
+		},
+		"additionalProperties": false,
+		"required": ["name", "columns"]
+	}
+}

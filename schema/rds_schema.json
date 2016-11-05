@@ -1,0 +1,39 @@
+[
+	{
+		"name": "survey",
+		"columns": [
+			{
+				"name": "reasonid",
+				"foreigntablename": "reason"
+			},
+			{
+				"name": "feedback",
+				"datatype": "text"
+			},
+			{
+				"name": "eventid",
+				"foreigntablename": "event"
+			}
+		],
+		"uniquenessconstraints": [
+			["eventid"]
+		]
+	},
+        {
+		"name": "reason",
+		"columns": [
+			{
+				"name": "name",
+				"datatype": "text"
+			}
+		],
+		"uniquenessconstraints": [
+			["name"]
+		]
+	},
+	{
+		"name": "event",
+		"columns": [],
+		"uniquenessconstraints": []
+	}
+]
