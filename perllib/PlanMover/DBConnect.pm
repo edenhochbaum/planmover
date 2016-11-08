@@ -9,7 +9,7 @@ BEGIN {
 	$ENV{DBNAME}		||= 'edentestalpha';
 	$ENV{DBHOST}		||= 'edentestalpha.cdcnwhesdbho.us-west-2.rds.amazonaws.com';
 	$ENV{DBUSERNAME}	||= 'edentestalpha';
-	$ENV{DBPASSWORD}	||= 'No7h84JNH1XY';
+	$ENV{DBPASSWORD}	||= 'XXXXXXXXXXXXX';
 }
 
 sub GetDBH {

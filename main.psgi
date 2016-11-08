@@ -11,15 +11,18 @@ use Data::Dumper;
 use Carp::Assert ();
 use Router::Simple;
 use File::Slurp;
+use IPC::Run3;
 
 use PlanMover::DBConnect;
 use PlanMover::MungeHTML;
+use PlanMover::Slack;
+
 
 my $router = Router::Simple->new();
-$router->connect('/api/*', {
-	controller	=> 'Api',
-	action		=> 'process_api',
+$router->connect('/favicon.ico', {
+	action	=> 'return_icon',
 });
+
 $router->connect('/htdocs/:page/eventid/:eventid', {
 	action		=> 'render_page',
 });
@@ -34,27 +37,41 @@ my $routingmiddleware = sub {
 	my $plackresponse;
 
 	if (my $p = $router->match($env)) {
-		Carp::Assert::assert(
-			($p->{action} eq 'render_page' || $p->{action} eq 'page_submit'),
-			sprintf('failed to recognize page action [%s]', $p->{action}),
-		);
-		Carp::Assert::assert(
-			($p->{page} eq 'apptcreation'),
-			sprintf('failed to recognize page [%s]', $p->{page}),
-		);
+		#Carp::Assert::assert(
+		#	($p->{action} eq 'render_page' || $p->{action} eq 'page_submit'),
+		#	sprintf('failed to recognize page action [%s]', $p->{action}),
+		#);
+		#Carp::Assert::assert(
+		#	($p->{page} eq 'apptcreation'),
+		#	sprintf('failed to recognize page [%s]', $p->{page}),
+		#);
 			
 		my $action = $p->{action};
+
+		warn sprintf('action is [%s]', $action);
 		my $page = $p->{page};
 
-		if ($action eq 'render_page') {
+		if ($action eq 'return_icon') {
+			$plackresponse = Plack::Response->new(200);
+			$plackresponse->content_type('image/x-icon');
+			
+			my $iconfilename = '/home/eden/planmover/images/favicon.ico';
+			my $image = File::Slurp::read_file(
+				$iconfilename,
+				binmode => ':raw',
+			);
+
+			$plackresponse->body($image);
+		}
+		elsif ($action eq 'render_page') {
 			my $eventid = $p->{eventid};
 
 			Carp::Assert::assert($eventid =~ /\d+/, sprintf('expected integer eventid [%s]', $eventid));
 
-			my $filetext = File::Slurp::read_file('/home/eden/planmover/htdocs/templates/html/apptcreation.html');
+			my $filetext = File::Slurp::read_file('/home/eden/planmover/htdocs/templates/html/apptcheckin.html');
 
-			my $newfiletext = PlanMover::MungeHTML::Munge($filetext, {EVENTID=>'boo'});
-			
+			my $newfiletext = PlanMover::MungeHTML::Munge($filetext, {EVENTID=>$eventid});
+
 			$plackresponse = Plack::Response->new(200);
 			$plackresponse->content_type('text/html');
 			
@@ -64,19 +81,24 @@ my $routingmiddleware = sub {
 			my $plackrequest = Plack::Request->new($env);
 			my $bodyparameters = $plackrequest->body_parameters;
 
-			my $dbh = PlanMover::DBConnect::GetDBH();
-			$dbh->ping or die 'could not ping dbh here';
+			# TODO: don't block on this
+			PlanMover::Slack::PostSecondSlackMessage();
+			
+			#my $dbh = PlanMover::DBConnect::GetDBH();
+			#$dbh->ping or die 'could not ping dbh here';
 
-			my $sth = $dbh->prepare('select * from planmover.survey where 1=1') or die 'failed prepare: ' . $dbh->errstr;
-			$sth->execute() or die 'could not execute statemenet: ' . $sth->errstr;
+			#my $sth = $dbh->prepare('select * from planmover.survey where 1=1') or die 'failed prepare: ' . $dbh->errstr;
+			#$sth->execute() or die 'could not execute statemenet: ' . $sth->errstr;
 
-			while(my @data = $sth->fetchrow_array()) {
-				$body .= Dumper(\@data);
-			}
+			#while(my @data = $sth->fetchrow_array()) {
+			#	$body .= Dumper(\@data);
+			#}
+
+			my $filetext = File::Slurp::read_file('/home/eden/planmover/htdocs/templates/html/thankyou.html');
 
 			$plackresponse = Plack::Response->new(200);
 			$plackresponse->content_type('text/html');
-			$plackresponse->body($body);
+			$plackresponse->body($filetext);
 		}
 
 		return $plackresponse->finalize();
