@@ -5,3 +5,4 @@ sudo /usr/local/bin/plackup main.psgi --port 80
 psql --host=edentestalpha.cdcnwhesdbho.us-west-2.rds.amazonaws.com --port=5432 --username=edentestalpha --dbname=edentestalpha
 
 foobarbizbaz
+bizbuzbaz
